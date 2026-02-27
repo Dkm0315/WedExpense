@@ -6,26 +6,42 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   try {
     if (typeof catalyst !== 'undefined' && catalyst.auth) {
-      // Try generateAuthToken (works on client hosting) or getHeaders (works on AppSail)
+      console.log('[Auth] catalyst.auth methods:', Object.keys(catalyst.auth));
       if (typeof catalyst.auth.generateAuthToken === 'function') {
         const response = await catalyst.auth.generateAuthToken();
+        console.log('[Auth] Token obtained, length:', response?.access_token?.length);
         headers['Authorization'] = response.access_token;
       } else if (typeof catalyst.auth.getHeaders === 'function') {
         const csrfHeaders = await catalyst.auth.getHeaders();
+        console.log('[Auth] Using CSRF headers:', Object.keys(csrfHeaders));
         Object.assign(headers, csrfHeaders);
+      } else {
+        console.warn('[Auth] No auth method available on catalyst.auth');
       }
+    } else {
+      console.warn('[Auth] catalyst SDK not available');
     }
-  } catch {}
+  } catch (err) {
+    console.error('[Auth] Failed to get auth headers:', err);
+  }
   return headers;
 }
 
 async function request(path: string, options: RequestInit = {}): Promise<any> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}${path}`, {
+  const url = `${API_BASE}${path}`;
+  console.log('[API]', options.method || 'GET', url, 'Auth:', !!headers['Authorization']);
+  const res = await fetch(url, {
     ...options,
     credentials: 'same-origin',
     headers: { ...headers, ...options.headers },
   });
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text();
+    console.error('[API] Non-JSON response:', res.status, contentType, text.substring(0, 200));
+    throw new Error(`Server returned ${res.status} (${contentType.split(';')[0] || 'unknown'}). Check console for details.`);
+  }
   const data = await res.json();
   if (data.status === 'error') throw new Error(data.message);
   return data.data;
