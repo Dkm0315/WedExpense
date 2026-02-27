@@ -1,0 +1,34 @@
+{
+  "functions": {
+    "targets": [
+      "wedexpense_function"
+    ],
+    "ignore": [],
+    "source": "functions"
+  },
+  "client": {
+    "source": "wedexpense-client",
+    "ignore": [
+      "node_modules",
+      "src",
+      "public",
+      ".env",
+      "*.map",
+      ".git",
+      "test-results",
+      "test_receipt.png"
+    ]
+  },
+  "appsail": [
+    {
+      "name": "AppSail",
+      "source": "appsail-nodejs"
+    }
+  ],
+  "slate": [
+    {
+      "name": "wedexpense-slate",
+      "source": "/Users/pavankumarmarwaha/Documents/WedEpense/wedexpense-client"
+    }
+  ]
+}

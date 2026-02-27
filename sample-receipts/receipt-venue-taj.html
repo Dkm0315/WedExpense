@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Taj Palace Venue Invoice</title>
+<style>
+  body { font-family: 'Georgia', serif; max-width: 600px; margin: 40px auto; padding: 30px; background: #fff; color: #333; }
+  .header { text-align: center; border-bottom: 3px double #8B4513; padding-bottom: 15px; margin-bottom: 20px; }
+  .header h1 { font-size: 24px; color: #8B4513; margin: 0; letter-spacing: 2px; }
+  .header p { margin: 4px 0; font-size: 12px; color: #666; }
+  .invoice-meta { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 25px; }
+  .invoice-meta div { line-height: 1.8; }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  th { background: #8B4513; color: white; padding: 10px; text-align: left; font-size: 13px; }
+  td { padding: 10px; border-bottom: 1px solid #ddd; font-size: 13px; }
+  .total-row td { font-weight: bold; border-top: 2px solid #8B4513; font-size: 15px; }
+  .footer { margin-top: 30px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 15px; }
+  .stamp { color: #8B4513; font-weight: bold; font-size: 14px; }
+  .gst { font-size: 11px; color: #666; }
+</style></head><body>
+  <div class="header">
+    <h1>TAJ PALACE BANQUETS</h1>
+    <p>Premium Wedding Venues Since 1985</p>
+    <p>Sardar Patel Marg, Diplomatic Enclave, New Delhi - 110021</p>
+    <p>Tel: +91 11 2611 0202 | GSTIN: 07AABCT1234A1ZA</p>
+  </div>
+
+  <div class="invoice-meta">
+    <div>
+      <strong>INVOICE</strong><br>
+      Invoice No: TPB/2026/WED-0847<br>
+      Date: 28 Feb 2026<br>
+      Event Date: 15 Dec 2026
+    </div>
+    <div style="text-align:right">
+      <strong>BILL TO:</strong><br>
+      Mr. Dhairya Marwaha<br>
+      Ms. Isha Verma<br>
+      Wedding Reception
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>
+    <tr><td>Grand Ballroom Rental (Evening 6PM-12AM)</td><td>1</td><td>₹3,50,000</td><td>₹3,50,000</td></tr>
+    <tr><td>Veg Buffet - Premium Menu (per plate)</td><td>500</td><td>₹2,200</td><td>₹11,00,000</td></tr>
+    <tr><td>Non-Veg Counters - 4 Live Stations</td><td>4</td><td>₹75,000</td><td>₹3,00,000</td></tr>
+    <tr><td>Welcome Drinks & Bar Service (per head)</td><td>500</td><td>₹800</td><td>₹4,00,000</td></tr>
+    <tr><td>Stage Setup & Floral Decoration</td><td>1</td><td>₹2,50,000</td><td>₹2,50,000</td></tr>
+    <tr><td>Valet Parking (100 cars)</td><td>1</td><td>₹50,000</td><td>₹50,000</td></tr>
+    <tr><td>Bridal Suite (1 night)</td><td>1</td><td>₹25,000</td><td>₹25,000</td></tr>
+    <tr><td colspan="3" style="text-align:right"><strong>Subtotal</strong></td><td><strong>₹24,75,000</strong></td></tr>
+    <tr><td colspan="3" class="gst" style="text-align:right">CGST @ 9%</td><td class="gst">₹2,22,750</td></tr>
+    <tr><td colspan="3" class="gst" style="text-align:right">SGST @ 9%</td><td class="gst">₹2,22,750</td></tr>
+    <tr class="total-row"><td colspan="3" style="text-align:right">TOTAL</td><td>₹29,20,500</td></tr>
+  </table>
+
+  <p><strong>Payment Terms:</strong> 50% advance at booking, 30% one month before event, 20% balance on event day.</p>
+  <p><strong>Advance Received:</strong> <span class="stamp">₹14,60,250 (Paid via NEFT - 01 Mar 2026)</span></p>
+  <p><strong>Balance Due:</strong> ₹14,60,250</p>
+
+  <div class="footer">
+    <p>This is a computer-generated invoice. For queries, contact events@tajpalace.com</p>
+    <p>Thank you for choosing Taj Palace Banquets for your special day!</p>
+  </div>
+</body></html>

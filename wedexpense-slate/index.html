@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WedExpense — Sign In</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1025, #2d1b4e, #1a1025);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+            text-align: center;
+        }
+        .login-header {
+            padding: 36px 28px 20px;
+        }
+        .login-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .login-header .emoji {
+            margin-right: 8px;
+        }
+        .login-header p {
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 0.9rem;
+        }
+        #login-container {
+            padding: 0 28px 32px;
+            min-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <h1><span class="emoji">✨</span>WedExpense</h1>
+            <p>Sign in to manage your wedding expenses</p>
+        </div>
+        <div id="login-container"></div>
+    </div>
+    <script src="https://static.zohocdn.com/catalyst/sdk/js/4.5.0/catalystWebSDK.js"></script>
+    <script src="/__catalyst/sdk/init.js"></script>
+    <script>
+        const config = {
+            signin_providers_only: true,
+            service_url: "/app/index.html"
+        };
+        catalyst.auth.signIn("login-container", config);
+    </script>
+</body>
+</html>

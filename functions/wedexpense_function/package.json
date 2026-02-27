@@ -1,0 +1,9 @@
+{
+	"name": "wedexpense_function",
+	"version": "1.0.0",
+	"main": "index.js",
+	"author": "dhairya",
+	"dependencies": {
+		"zcatalyst-sdk-node": "latest"
+	}
+}
