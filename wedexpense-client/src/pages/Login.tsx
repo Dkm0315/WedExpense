@@ -20,7 +20,7 @@ const Login: React.FC = () => {
         if (container) container.innerHTML = '';
 
         catalyst.auth.signIn('login-container', {
-          service_url: '/app/index.html',
+          service_url: '/',
         });
       } else {
         // SDK not loaded — show dev hint
@@ -72,7 +72,7 @@ const Login: React.FC = () => {
             last_name: signupForm.last_name.trim(),
             email_id: signupForm.email.trim(),
             platform_type: 'web',
-            redirect_url: window.location.origin + '/app/index.html',
+            redirect_url: window.location.origin + '/',
           });
 
           if (signupStatus >= 400) {
