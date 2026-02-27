@@ -72,7 +72,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter basename="/app">
+    <BrowserRouter>
       <Routes>
         <Route
           path="/login"
