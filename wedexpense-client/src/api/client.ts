@@ -144,10 +144,10 @@ export const getAIInsights = (wid: string) =>
   request(`/weddings/${wid}/ai-insights`, { method: 'POST' });
 
 // ── AI Chat Assistant ──
-export const chatWithAI = (wid: string, message: string, document_text?: string) =>
+export const chatWithAI = (wid: string, message: string, document_text?: string, history?: { role: string; content: string }[]) =>
   request(`/weddings/${wid}/ai-chat`, {
     method: 'POST',
-    body: JSON.stringify({ message, document_text }),
+    body: JSON.stringify({ message, document_text, history }),
   });
 
 export async function parseDocument(wid: string, file: File): Promise<any> {

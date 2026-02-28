@@ -11,6 +11,9 @@ import {
   BsCurrencyRupee,
   BsWallet2,
   BsGraphUpArrow,
+  BsListCheck,
+  BsPencilSquare,
+  BsArrowLeft,
   BsShareFill,
   BsClipboard2Check,
   BsClockHistory,
@@ -19,6 +22,10 @@ import Layout from '../components/Layout';
 import EventCard from '../components/EventCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
+import BudgetSummaryContent from '../components/BudgetSummaryContent';
+import SearchExpensesContent from '../components/SearchExpensesContent';
+import EditIncomeModal from '../components/EditIncomeModal';
+import EditWeddingModal from '../components/EditWeddingModal';
 import {
   getWedding,
   getEvents,
@@ -83,6 +90,8 @@ const WeddingDetail: React.FC = () => {
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [incomeForm, setIncomeForm] = useState({ amount: '', amount_received: '', description: '', payment_status: 'pending', payment_date: '', client_name: '' });
   const [incomeSubmitting, setIncomeSubmitting] = useState(false);
+  const [editingIncome, setEditingIncome] = useState<any>(null);
+  const [editingWedding, setEditingWedding] = useState(false);
   const [shareToken, setShareToken] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
@@ -165,8 +174,11 @@ const WeddingDetail: React.FC = () => {
   };
 
   const totalBudget = parseFloat(wedding?.total_budget || '0');
+  const plannedBudget = parseFloat(summary?.planned_budget || '0');
   const totalSpent = parseFloat(summary?.total_spent || wedding?.total_spent || '0');
   const remaining = totalBudget - totalSpent;
+  const allocatedPct = totalBudget > 0 ? Math.round((plannedBudget / totalBudget) * 100) : 0;
+  const spentPct = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'events', label: 'Events', icon: <BsCalendarEvent /> },
@@ -283,21 +295,39 @@ const WeddingDetail: React.FC = () => {
         exit="exit"
         transition={{ duration: 0.4 }}
       >
-        {/* Breadcrumb */}
-        <div className="text-sm text-white/40 mb-4">
-          <Link to="/" className="hover:text-white/60 transition-colors">
-            Weddings
+        {/* Breadcrumb with back button */}
+        <div className="flex items-center gap-3 mb-4">
+          <Link
+            to="/"
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-colors"
+            title="Back to Weddings"
+          >
+            <BsArrowLeft className="text-lg" />
           </Link>
-          <span className="mx-2">/</span>
-          <span className="text-white/70">{wedding?.wedding_name || 'Wedding'}</span>
+          <div className="text-sm text-white/40">
+            <Link to="/" className="hover:text-white/60 transition-colors">
+              Weddings
+            </Link>
+            <span className="mx-2">/</span>
+            <span className="text-white/70">{wedding?.wedding_name || 'Wedding'}</span>
+          </div>
         </div>
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
-              {wedding?.wedding_name}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                {wedding?.wedding_name}
+              </h1>
+              <button
+                onClick={() => setEditingWedding(true)}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-white/70 transition-colors"
+                title="Edit wedding details"
+              >
+                <BsPencilSquare className="text-sm" />
+              </button>
+            </div>
             {(wedding?.bride_name || wedding?.groom_name) && (
               <p className="text-sm text-white/50 mt-1">
                 {[wedding?.bride_name, wedding?.groom_name].filter(Boolean).join(' & ')}
@@ -350,7 +380,7 @@ const WeddingDetail: React.FC = () => {
         </AnimatePresence>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -364,6 +394,22 @@ const WeddingDetail: React.FC = () => {
               <span className="text-sm text-white/50">Total Budget</span>
             </div>
             <p className="text-2xl font-bold text-white">{formatINR(totalBudget)}</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-5"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <BsListCheck className="text-blue-400 text-lg" />
+              </div>
+              <span className="text-sm text-white/50">Planned</span>
+            </div>
+            <p className="text-2xl font-bold text-blue-400">{formatINR(plannedBudget)}</p>
+            <p className="text-xs text-white/40 mt-1">{allocatedPct}% allocated</p>
           </motion.div>
 
           <motion.div
@@ -384,7 +430,7 @@ const WeddingDetail: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.25 }}
             className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-5"
           >
             <div className="flex items-center gap-3 mb-2">
@@ -412,20 +458,55 @@ const WeddingDetail: React.FC = () => {
           </motion.div>
         </div>
 
+        {/* Budget Progress Bar — Planned vs Actual */}
+        {totalBudget > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4 mb-8"
+          >
+            <div className="flex items-center justify-between text-xs text-white/50 mb-2">
+              <span>Budget Utilization</span>
+              <span>{spentPct}% spent · {allocatedPct}% planned</span>
+            </div>
+            {/* Planned bar */}
+            <div className="relative h-3 bg-white/5 rounded-full overflow-hidden mb-1.5">
+              <div
+                className="absolute inset-y-0 left-0 bg-blue-500/40 rounded-full transition-all duration-700"
+                style={{ width: `${Math.min(allocatedPct, 100)}%` }}
+              />
+            </div>
+            {/* Spent bar */}
+            <div className="relative h-3 bg-white/5 rounded-full overflow-hidden">
+              <div
+                className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
+                  spentPct > 100
+                    ? 'bg-gradient-to-r from-red-500 to-red-400'
+                    : 'bg-gradient-to-r from-primary to-accent'
+                }`}
+                style={{ width: `${Math.min(spentPct, 100)}%` }}
+              />
+            </div>
+            <div className="flex items-center gap-4 mt-2 text-xs text-white/40">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-blue-500/50 inline-block" /> Planned ({allocatedPct}%)
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-gradient-to-r from-primary to-accent inline-block" /> Spent ({spentPct}%)
+              </span>
+            </div>
+          </motion.div>
+        )}
+
         {/* Tabs */}
         <div className="flex items-center gap-1 bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-1 mb-6 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => {
-                if (tab.key === 'budget') {
-                  navigate(`/wedding/${id}/budget`);
-                } else if (tab.key === 'search') {
-                  navigate(`/wedding/${id}/search`);
-                } else {
-                  if (tab.key === 'activity') loadAuditLogs();
-                  setActiveTab(tab.key as Tab);
-                }
+                if (tab.key === 'activity') loadAuditLogs();
+                setActiveTab(tab.key as Tab);
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab.key
@@ -566,6 +647,13 @@ const WeddingDetail: React.FC = () => {
                         )}
                       </div>
                       <button
+                        onClick={() => setEditingIncome(income)}
+                        className="p-2 text-white/30 hover:text-primary-300 transition-colors"
+                        title="Edit payment status"
+                      >
+                        <BsPencilSquare className="text-xs" />
+                      </button>
+                      <button
                         onClick={() => handleDeleteIncome(income.ROWID)}
                         className="p-2 text-white/30 hover:text-red-400 transition-colors"
                       >
@@ -577,6 +665,16 @@ const WeddingDetail: React.FC = () => {
               </div>
             )}
           </>
+        )}
+
+        {/* Budget Tab Content (Inline) */}
+        {activeTab === 'budget' && id && (
+          <BudgetSummaryContent weddingId={id} />
+        )}
+
+        {/* Search Tab Content (Inline) */}
+        {activeTab === 'search' && id && (
+          <SearchExpensesContent weddingId={id} />
         )}
 
         {/* Activity Tab Content (Audit Logs) */}
@@ -892,8 +990,15 @@ const WeddingDetail: React.FC = () => {
                         name="event_date"
                         value={eventForm.event_date}
                         onChange={handleEventFormChange}
+                        min={wedding?.start_date || wedding?.wedding_date || ''}
+                        max={wedding?.end_date || wedding?.start_date || ''}
                         className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors [color-scheme:dark]"
                       />
+                      {(wedding?.start_date || wedding?.wedding_date) && (
+                        <p className="text-xs text-white/30 mt-1">
+                          Must be between {formatDate(wedding?.start_date || wedding?.wedding_date)} and {formatDate(wedding?.end_date || wedding?.start_date || wedding?.wedding_date)}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-white/70 mb-1.5">
@@ -948,6 +1053,26 @@ const WeddingDetail: React.FC = () => {
           )}
         </AnimatePresence>
       </motion.div>
+
+      {/* Edit Income Modal */}
+      {editingIncome && (
+        <EditIncomeModal
+          income={editingIncome}
+          isOpen={!!editingIncome}
+          onClose={() => setEditingIncome(null)}
+          onSaved={() => fetchData()}
+        />
+      )}
+
+      {/* Edit Wedding Modal */}
+      {editingWedding && wedding && (
+        <EditWeddingModal
+          wedding={wedding}
+          isOpen={editingWedding}
+          onClose={() => setEditingWedding(false)}
+          onSaved={() => fetchData()}
+        />
+      )}
     </Layout>
   );
 };

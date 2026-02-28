@@ -9,21 +9,25 @@ interface BudgetBarProps {
 }
 
 const BudgetBar: React.FC<BudgetBarProps> = ({ spent, budget, label }) => {
-  const percent = budget > 0 ? Math.min(Math.round((spent / budget) * 100), 100) : 0;
+  const percent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+  const barWidth = Math.min(percent, 100);
+  const isOver = percent > 100;
 
-  const barColor =
-    percent >= 90
-      ? 'bg-red-500'
-      : percent >= 70
-      ? 'bg-yellow-500'
-      : 'bg-green-500';
+  const barColor = isOver
+    ? 'bg-red-500'
+    : percent >= 90
+    ? 'bg-red-500'
+    : percent >= 70
+    ? 'bg-yellow-500'
+    : 'bg-green-500';
 
-  const glowColor =
-    percent >= 90
-      ? 'shadow-red-500/30'
-      : percent >= 70
-      ? 'shadow-yellow-500/30'
-      : 'shadow-green-500/30';
+  const glowColor = isOver
+    ? 'shadow-red-500/30'
+    : percent >= 90
+    ? 'shadow-red-500/30'
+    : percent >= 70
+    ? 'shadow-yellow-500/30'
+    : 'shadow-green-500/30';
 
   return (
     <div className="w-full space-y-1.5">
@@ -34,7 +38,7 @@ const BudgetBar: React.FC<BudgetBarProps> = ({ spent, budget, label }) => {
           {formatINR(spent)} / {formatINR(budget)}{' '}
           <span
             className={`font-semibold ${
-              percent >= 90
+              isOver || percent >= 90
                 ? 'text-red-400'
                 : percent >= 70
                 ? 'text-yellow-400'
@@ -43,6 +47,11 @@ const BudgetBar: React.FC<BudgetBarProps> = ({ spent, budget, label }) => {
           >
             ({percent}%)
           </span>
+          {isOver && (
+            <span className="text-red-400 text-xs ml-1">
+              — {formatINR(spent - budget)} over
+            </span>
+          )}
         </span>
       </div>
 
@@ -51,7 +60,7 @@ const BudgetBar: React.FC<BudgetBarProps> = ({ spent, budget, label }) => {
         <motion.div
           className={`h-full rounded-full ${barColor} shadow-lg ${glowColor}`}
           initial={{ width: 0 }}
-          animate={{ width: `${percent}%` }}
+          animate={{ width: `${barWidth}%` }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         />
       </div>

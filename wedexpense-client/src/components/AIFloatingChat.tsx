@@ -65,27 +65,58 @@ const AIFloatingChat: React.FC<AIFloatingChatProps> = ({ weddingId, weddingName 
   const committedTranscriptRef = useRef<string>('');
   const preVoiceInputRef = useRef<string>('');
 
-  // Initialize welcome message when opened with a wedding
+  // Initialize: restore from localStorage or show welcome message
   useEffect(() => {
     if (isOpen && weddingId && !initialized) {
-      setMessages([
-        {
-          id: '0',
-          role: 'assistant',
-          content: `Hi! I'm your AI Wedding Assistant${weddingName ? ` for **${weddingName}**` : ''}. Ask me anything about your budget, vendors, or Indian wedding planning!\n\nYou can also use the **+** button to upload documents or paste vendor URLs for analysis.`,
-          timestamp: new Date(),
-        },
-      ]);
+      const stored = localStorage.getItem(`wedexpense_chat_${weddingId}`);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as any[];
+          const restored = parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+          setMessages(restored);
+        } catch {
+          setMessages([]);
+        }
+      }
+      if (!stored || stored === '[]') {
+        setMessages([
+          {
+            id: '0',
+            role: 'assistant',
+            content: `Hi! I'm your AI Wedding Assistant${weddingName ? ` for **${weddingName}**` : ''}. Ask me anything about your budget, vendors, or Indian wedding planning!\n\nYou can also use the **+** button to upload documents or paste vendor URLs for analysis.`,
+            timestamp: new Date(),
+          },
+        ]);
+      }
       setInitialized(true);
     }
   }, [isOpen, weddingId, weddingName, initialized]);
 
-  // Reset when wedding changes
+  // Auto-save messages to localStorage
+  useEffect(() => {
+    if (!weddingId || !initialized || messages.length === 0) return;
+    const toStore = messages.slice(-50);
+    localStorage.setItem(`wedexpense_chat_${weddingId}`, JSON.stringify(toStore));
+  }, [messages, weddingId, initialized]);
+
+  // Reset state when wedding changes (but don't clear localStorage)
   useEffect(() => {
     setInitialized(false);
     setMessages([]);
     setAttachment(null);
   }, [weddingId]);
+
+  const clearChat = () => {
+    if (weddingId) localStorage.removeItem(`wedexpense_chat_${weddingId}`);
+    setMessages([
+      {
+        id: '0',
+        role: 'assistant',
+        content: `Hi! I'm your AI Wedding Assistant${weddingName ? ` for **${weddingName}**` : ''}. Ask me anything about your budget, vendors, or Indian wedding planning!\n\nYou can also use the **+** button to upload documents or paste vendor URLs for analysis.`,
+        timestamp: new Date(),
+      },
+    ]);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -145,7 +176,12 @@ const AIFloatingChat: React.FC<AIFloatingChatProps> = ({ weddingId, weddingName 
     setLoading(true);
 
     try {
-      const data = await chatWithAI(weddingId, text, docText);
+      // Build conversation history for context (last 6 messages, excluding welcome)
+      const recentHistory = messages
+        .filter(m => m.id !== '0')
+        .slice(-6)
+        .map(m => ({ role: m.role, content: m.content }));
+      const data = await chatWithAI(weddingId, text, docText, recentHistory);
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -510,12 +546,21 @@ const AIFloatingChat: React.FC<AIFloatingChatProps> = ({ weddingId, weddingName 
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
-                >
-                  <BsXLg />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={clearChat}
+                    className="px-2 py-1 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/70 text-[10px] transition-colors"
+                    title="Clear chat history"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                  >
+                    <BsXLg />
+                  </button>
+                </div>
               </div>
 
               {/* Messages */}

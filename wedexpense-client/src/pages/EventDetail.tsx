@@ -7,6 +7,8 @@ import {
   BsCamera,
   BsFunnel,
   BsCalendarEvent,
+  BsPencilSquare,
+  BsArrowLeft,
 } from 'react-icons/bs';
 import Layout from '../components/Layout';
 import ExpenseCard from '../components/ExpenseCard';
@@ -14,6 +16,7 @@ import BudgetBar from '../components/BudgetBar';
 import ReceiptScanner from '../components/ReceiptScanner';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
+import EditExpenseModal from '../components/EditExpenseModal';
 import {
   getWedding,
   getEvents,
@@ -22,6 +25,7 @@ import {
   deleteExpense,
   getCategories,
   getCurrentUser,
+  updateEvent,
 } from '../api/client';
 import { formatDate } from '../utils/format';
 
@@ -67,6 +71,11 @@ const EventDetail: React.FC = () => {
   const [showScannerModal, setShowScannerModal] = useState(false);
   const [expenseForm, setExpenseForm] = useState<ExpenseForm>(INITIAL_EXPENSE_FORM);
   const [submitting, setSubmitting] = useState(false);
+
+  const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [showEditEvent, setShowEditEvent] = useState(false);
+  const [editEventForm, setEditEventForm] = useState({ event_name: '', event_budget: '', event_date: '' });
+  const [editEventSaving, setEditEventSaving] = useState(false);
 
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
@@ -205,28 +214,53 @@ const EventDetail: React.FC = () => {
         exit="exit"
         transition={{ duration: 0.4 }}
       >
-        {/* Breadcrumb */}
-        <div className="text-sm text-white/40 mb-4">
-          <Link to="/" className="hover:text-white/60 transition-colors">
-            Weddings
-          </Link>
-          <span className="mx-2">/</span>
+        {/* Breadcrumb with back button */}
+        <div className="flex items-center gap-3 mb-4">
           <Link
             to={`/wedding/${wid}`}
-            className="hover:text-white/60 transition-colors"
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-colors"
+            title="Back to Wedding"
           >
-            {wedding?.wedding_name || 'Wedding'}
+            <BsArrowLeft className="text-lg" />
           </Link>
-          <span className="mx-2">/</span>
-          <span className="text-white/70">{event?.event_name || 'Event'}</span>
+          <div className="text-sm text-white/40">
+            <Link to="/" className="hover:text-white/60 transition-colors">
+              Weddings
+            </Link>
+            <span className="mx-2">/</span>
+            <Link
+              to={`/wedding/${wid}`}
+              className="hover:text-white/60 transition-colors"
+            >
+              {wedding?.wedding_name || 'Wedding'}
+            </Link>
+            <span className="mx-2">/</span>
+            <span className="text-white/70">{event?.event_name || 'Event'}</span>
+          </div>
         </div>
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
-              {event?.event_name || 'Event'}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                {event?.event_name || 'Event'}
+              </h1>
+              <button
+                onClick={() => {
+                  setEditEventForm({
+                    event_name: event?.event_name || '',
+                    event_budget: event?.event_budget?.toString() || '',
+                    event_date: event?.event_date || '',
+                  });
+                  setShowEditEvent(true);
+                }}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-white/70 transition-colors"
+                title="Edit event details"
+              >
+                <BsPencilSquare className="text-sm" />
+              </button>
+            </div>
             <div className="flex items-center gap-4 text-sm text-white/50 mt-1">
               {event?.event_date && (
                 <span className="flex items-center gap-1">
@@ -397,6 +431,7 @@ const EventDetail: React.FC = () => {
               >
                 <ExpenseCard
                   expense={expense}
+                  onEdit={() => setEditingExpense(expense)}
                   onDelete={() => handleDeleteExpense(expense.ROWID)}
                 />
               </motion.div>
@@ -657,6 +692,106 @@ const EventDetail: React.FC = () => {
           )}
         </AnimatePresence>
       </motion.div>
+
+      {/* Edit Expense Modal */}
+      {editingExpense && (
+        <EditExpenseModal
+          expense={editingExpense}
+          isOpen={!!editingExpense}
+          onClose={() => setEditingExpense(null)}
+          onSaved={() => fetchData()}
+        />
+      )}
+
+      {/* Edit Event Modal */}
+      <AnimatePresence>
+        {showEditEvent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowEditEvent(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-dark-100 border border-white/10 rounded-2xl p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-semibold text-white">Edit Event</h2>
+                <button onClick={() => setShowEditEvent(false)} className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                  <BsXLg />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-1.5">Event Name</label>
+                  <input
+                    value={editEventForm.event_name}
+                    onChange={(e) => setEditEventForm(p => ({ ...p, event_name: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Event Budget</label>
+                    <input
+                      type="number"
+                      value={editEventForm.event_budget}
+                      onChange={(e) => setEditEventForm(p => ({ ...p, event_budget: e.target.value }))}
+                      min="0"
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">Event Date</label>
+                    <input
+                      type="date"
+                      value={editEventForm.event_date}
+                      onChange={(e) => setEditEventForm(p => ({ ...p, event_date: e.target.value }))}
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors [color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowEditEvent(false)}
+                  className="flex-1 py-2.5 bg-white/5 border border-white/10 text-white/60 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  onClick={async () => {
+                    if (!event?.ROWID) return;
+                    setEditEventSaving(true);
+                    try {
+                      await updateEvent(event.ROWID, {
+                        event_name: editEventForm.event_name,
+                        event_budget: parseFloat(editEventForm.event_budget) || 0,
+                        event_date: editEventForm.event_date,
+                      });
+                      setShowEditEvent(false);
+                      fetchData();
+                    } catch {} finally {
+                      setEditEventSaving(false);
+                    }
+                  }}
+                  disabled={editEventSaving}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-600 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  {editEventSaving ? 'Saving...' : 'Save Changes'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 };

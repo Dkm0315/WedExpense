@@ -274,7 +274,7 @@ module.exports = async (req, res) => {
 		if (url === '/api/weddings' && method === 'GET') {
 			const zcql = app.zcql();
 			const result = await zcql.executeZCQLQuery(
-				`SELECT ROWID, wedding_name, wedding_date, total_budget, bride_name, groom_name, venue_city, is_planner_mode, CREATEDTIME FROM Weddings WHERE org_id = ${escVal(orgId)} ORDER BY CREATEDTIME DESC`
+				`SELECT ROWID, wedding_name, wedding_date, start_date, end_date, total_budget, bride_name, groom_name, venue_city, is_planner_mode, CREATEDTIME FROM Weddings WHERE org_id = ${escVal(orgId)} ORDER BY CREATEDTIME DESC`
 			);
 			const weddings = result.map(r => r.Weddings);
 
@@ -315,6 +315,8 @@ module.exports = async (req, res) => {
 				is_planner_mode: body.is_planner_mode || false
 			};
 			if (body.wedding_date) rowData.wedding_date = body.wedding_date;
+			if (body.start_date) { rowData.start_date = body.start_date; rowData.wedding_date = body.start_date; }
+			if (body.end_date) rowData.end_date = body.end_date;
 			const row = await zcqlInsert(zcql, 'Weddings', rowData);
 			await logAudit(zcql, orgId, row.ROWID || '', 'created', 'wedding', body.wedding_name, currentUser?.email_id || '', { total_budget: rowData.total_budget });
 			return ok(res, row);
@@ -323,7 +325,7 @@ module.exports = async (req, res) => {
 		if ((params = matchRoute(url, '/api/weddings/:id')) && method === 'GET') {
 			const zcql = app.zcql();
 			const result = await zcql.executeZCQLQuery(
-				`SELECT ROWID, wedding_name, wedding_date, total_budget, bride_name, groom_name, venue_city, is_planner_mode, CREATEDTIME FROM Weddings WHERE ROWID = ${params.id} AND org_id = ${escVal(orgId)}`
+				`SELECT ROWID, wedding_name, wedding_date, start_date, end_date, total_budget, bride_name, groom_name, venue_city, is_planner_mode, CREATEDTIME FROM Weddings WHERE ROWID = ${params.id} AND org_id = ${escVal(orgId)}`
 			);
 			if (!result.length) return err(res, 404, 'Wedding not found');
 			return ok(res, result[0].Weddings);
@@ -343,6 +345,8 @@ module.exports = async (req, res) => {
 			if (body.venue_city !== undefined) updateData.venue_city = body.venue_city;
 			if (body.is_planner_mode !== undefined) updateData.is_planner_mode = body.is_planner_mode;
 			if (body.wedding_date) updateData.wedding_date = body.wedding_date;
+			if (body.start_date !== undefined) { updateData.start_date = body.start_date; updateData.wedding_date = body.start_date; }
+			if (body.end_date !== undefined) updateData.end_date = body.end_date;
 			const row = await zcqlUpdate(zcql, 'Weddings', params.id, updateData);
 			await logAudit(zcql, orgId, params.id, 'updated', 'wedding', body.wedding_name || wedding?.wedding_name || '', currentUser?.email_id || '', updateData);
 			return ok(res, row);
@@ -428,6 +432,16 @@ module.exports = async (req, res) => {
 			if (body.status !== undefined) updateData.status = body.status;
 			if (body.event_date) updateData.event_date = body.event_date;
 			const row = await zcqlUpdate(zcql, 'Events', params.id, updateData);
+
+			// Invalidate summary cache (event budget affects planned total)
+			if (body.wedding_id) {
+				try {
+					const cache = app.cache();
+					const segment = cache.segment();
+					await segment.delete(`summary_${body.wedding_id}`);
+				} catch (_) {}
+			}
+
 			return ok(res, row);
 		}
 
@@ -437,6 +451,16 @@ module.exports = async (req, res) => {
 			await zcql.executeZCQLQuery(`DELETE FROM Expenses WHERE event_id = ${params.id}`);
 			await logAudit(zcql, orgId, '', 'deleted', 'event', 'Event #' + params.id, currentUser?.email_id || '', {});
 			await zcqlDelete(zcql, 'Events', params.id);
+
+			// Invalidate summary cache
+			if (body) {
+				try {
+					const cache = app.cache();
+					const segment = cache.segment();
+					if (body.wedding_id) await segment.delete(`summary_${body.wedding_id}`);
+				} catch (_) {}
+			}
+
 			return ok(res, { deleted: true });
 		}
 
@@ -751,17 +775,13 @@ module.exports = async (req, res) => {
 		// ═══════════ SUMMARY / ANALYTICS ═══════════
 
 		if ((params = matchRoute(url, '/api/weddings/:wid/summary')) && method === 'GET') {
-			// Try cache first (skip with ?fresh=1)
-			if (!query.get('fresh')) {
-				let cached = null;
-				try {
-					const cache = app.cache();
-					const segment = cache.segment();
-					const val = await segment.getValue(`summary_${params.wid}`);
-					if (val) cached = JSON.parse(val);
-				} catch (_) {}
-				if (cached) return ok(res, cached);
-			}
+			// Clear any stale cache on every request, then recompute
+			// (Ensures planned_budget and other new fields are always fresh)
+			try {
+				const cache = app.cache();
+				const segment = cache.segment();
+				await segment.delete(`summary_${params.wid}`);
+			} catch (_) {}
 
 			const zcql = app.zcql();
 
@@ -785,10 +805,20 @@ module.exports = async (req, res) => {
 				`SELECT paid_by, SUM(amount) as total FROM Expenses WHERE wedding_id = ${params.wid} GROUP BY paid_by`
 			);
 
+			// Planned budget (sum of all event budgets)
+			const plannedEventsResult = await zcql.executeZCQLQuery(
+				`SELECT event_budget FROM Events WHERE wedding_id = ${params.wid}`
+			);
+			const plannedBudgetTotal = plannedEventsResult.reduce((sum, r) => {
+				const evt = r.Events || r;
+				return sum + (parseFloat(evt.event_budget) || 0);
+			}, 0);
+
 			const totalRow = totalResult[0]?.Expenses || {};
 			const summary = {
 				total_spent: totalRow.total_spent || totalRow['SUM(amount)'] || 0,
 				total_paid: totalRow.total_paid || totalRow['SUM(amount_paid)'] || 0,
+				planned_budget: plannedBudgetTotal,
 				per_event: eventResult.map(r => {
 					const e = r.Expenses || {};
 					return { event_id: e.event_id, total: e.total || e['SUM(amount)'] || 0 };
@@ -802,13 +832,6 @@ module.exports = async (req, res) => {
 					return { paid_by: e.paid_by, total: e.total || e['SUM(amount)'] || 0 };
 				})
 			};
-
-			// Cache the result
-			try {
-				const cache = app.cache();
-				const segment = cache.segment();
-				await segment.put(`summary_${params.wid}`, JSON.stringify(summary));
-			} catch (_) {}
 
 			return ok(res, summary);
 		}
@@ -1209,7 +1232,13 @@ Keep each insight to 2-3 sentences. Use ₹ for currency. Be specific to Indian 
 			const body = await parseBody(req);
 			const userMessage = body.message || '';
 			const documentText = body.document_text || '';
+			const chatHistory = Array.isArray(body.history) ? body.history.slice(-4) : [];
 			if (!userMessage && !documentText) return err(res, 400, 'Message is required');
+
+			// Build recent context from chat history for follow-up awareness
+			const recentContext = chatHistory.length > 0
+				? '\n\nRecent conversation:\n' + chatHistory.map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${(h.content || '').substring(0, 200)}`).join('\n')
+				: '';
 
 			const zcql = app.zcql();
 

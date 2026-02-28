@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BsSend,
@@ -8,6 +8,7 @@ import {
   BsRobot,
   BsPersonCircle,
   BsPaperclip,
+  BsArrowLeft,
   BsStopCircle,
 } from 'react-icons/bs';
 import Layout from '../components/Layout';
@@ -35,6 +36,7 @@ const QUICK_QUESTIONS = [
 
 const AIAssistant: React.FC = () => {
   const { wid } = useParams<{ wid: string }>();
+  const navigate = useNavigate();
 
   const [wedding, setWedding] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -302,20 +304,29 @@ const AIAssistant: React.FC = () => {
         transition={{ duration: 0.4 }}
         className="flex flex-col h-[calc(100vh-120px)]"
       >
-        {/* Breadcrumb */}
-        <div className="text-sm text-white/40 mb-3">
-          <Link to="/" className="hover:text-white/60 transition-colors">
-            Weddings
-          </Link>
-          <span className="mx-2">/</span>
-          <Link
-            to={`/wedding/${wid}`}
-            className="hover:text-white/60 transition-colors"
+        {/* Breadcrumb with back button */}
+        <div className="flex items-center gap-3 mb-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-colors"
+            title="Go back"
           >
-            {wedding?.wedding_name || 'Wedding'}
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-white/70">AI Assistant</span>
+            <BsArrowLeft className="text-lg" />
+          </button>
+          <div className="text-sm text-white/40">
+            <Link to="/" className="hover:text-white/60 transition-colors">
+              Weddings
+            </Link>
+            <span className="mx-2">/</span>
+            <Link
+              to={`/wedding/${wid}`}
+              className="hover:text-white/60 transition-colors"
+            >
+              {wedding?.wedding_name || 'Wedding'}
+            </Link>
+            <span className="mx-2">/</span>
+            <span className="text-white/70">AI Assistant</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 mb-4">

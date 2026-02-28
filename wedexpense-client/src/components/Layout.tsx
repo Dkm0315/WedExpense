@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BsStars, BsPersonCircle, BsBoxArrowRight, BsList, BsX } from 'react-icons/bs';
 import AIFloatingChat from './AIFloatingChat';
@@ -25,13 +25,13 @@ const Layout: React.FC<LayoutProps> = ({ children, userName, onLogout, weddingNa
       <nav className="sticky top-0 z-50 bg-white/5 backdrop-blur-lg border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
+            {/* Logo — clickable, goes to Dashboard */}
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <BsStars className="text-accent text-2xl" />
               <span className="text-xl font-bold bg-gradient-to-r from-primary-300 to-accent bg-clip-text text-transparent">
                 WedExpense
               </span>
-            </div>
+            </Link>
 
             {/* Desktop profile button */}
             <div className="hidden sm:block relative">

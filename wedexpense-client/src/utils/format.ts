@@ -19,6 +19,20 @@ export function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+export function formatDateRange(startDate?: string, endDate?: string, fallback?: string): string {
+  const start = startDate || fallback;
+  if (!start) return '';
+  const s = new Date(start);
+  if (!endDate || endDate === start) {
+    return s.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  const e = new Date(endDate);
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+    return `${s.getDate()} – ${e.getDate()} ${s.toLocaleDateString('en-IN', { month: 'short' })}, ${s.getFullYear()}`;
+  }
+  return `${s.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – ${e.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, ${e.getFullYear()}`;
+}
+
 export function budgetPercent(spent: string | number, budget: string | number): number {
   const s = typeof spent === 'string' ? parseFloat(spent) : spent;
   const b = typeof budget === 'string' ? parseFloat(budget) : budget;

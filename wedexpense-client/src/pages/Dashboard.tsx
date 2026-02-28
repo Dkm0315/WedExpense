@@ -14,13 +14,14 @@ import {
   BsGraphUpArrow,
   BsGraphDownArrow,
   BsCashCoin,
+  BsGearFill,
 } from 'react-icons/bs';
 import Layout from '../components/Layout';
 import BudgetBar from '../components/BudgetBar';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getWeddings, createWedding, getCurrentUser, getOrgSettings, createOnboarding, getPlannerSummary } from '../api/client';
-import { formatDate, formatINR } from '../utils/format';
+import { formatDate, formatDateRange, formatINR } from '../utils/format';
 
 declare const catalyst: any;
 
@@ -28,7 +29,8 @@ interface WeddingForm {
   wedding_name: string;
   bride_name: string;
   groom_name: string;
-  wedding_date: string;
+  start_date: string;
+  end_date: string;
   total_budget: string;
   venue_city: string;
 }
@@ -37,7 +39,8 @@ const INITIAL_FORM: WeddingForm = {
   wedding_name: '',
   bride_name: '',
   groom_name: '',
-  wedding_date: '',
+  start_date: '',
+  end_date: '',
   total_budget: '',
   venue_city: '',
 };
@@ -61,6 +64,8 @@ const Dashboard: React.FC = () => {
 
   // Planner summary
   const [plannerSummary, setPlannerSummary] = useState<any>(null);
+  const [showModeSwitch, setShowModeSwitch] = useState(false);
+  const [modeSwitching, setModeSwitching] = useState(false);
 
   const isPlanner = orgSettings?.account_type === 'planner';
 
@@ -312,15 +317,24 @@ const Dashboard: React.FC = () => {
             </h1>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all"
-          >
-            <BsPlus className="text-xl" />
-            {isPlanner ? 'New Client Wedding' : 'New Wedding'}
-          </motion.button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowModeSwitch(true)}
+              className="p-2.5 bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+              title="Switch mode"
+            >
+              <BsGearFill />
+            </button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all"
+            >
+              <BsPlus className="text-xl" />
+              {isPlanner ? 'New Client Wedding' : 'New Wedding'}
+            </motion.button>
+          </div>
         </div>
 
         {/* Planner Summary Cards */}
@@ -434,10 +448,10 @@ const Dashboard: React.FC = () => {
 
                   {/* Details */}
                   <div className="space-y-2 text-sm text-white/50 mb-4">
-                    {wedding.wedding_date && (
+                    {(wedding.start_date || wedding.wedding_date) && (
                       <div className="flex items-center gap-2">
                         <BsCalendarHeart className="text-accent text-xs" />
-                        <span>{formatDate(wedding.wedding_date)}</span>
+                        <span>{formatDateRange(wedding.start_date, wedding.end_date, wedding.wedding_date)}</span>
                       </div>
                     )}
                     {wedding.venue_city && (
@@ -572,34 +586,49 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Date + Budget */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Date Range */}
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-white/70 mb-1.5">
-                        Wedding Date
+                        From Date
                       </label>
                       <input
                         type="date"
-                        name="wedding_date"
-                        value={form.wedding_date}
+                        name="start_date"
+                        value={form.start_date}
                         onChange={handleChange}
                         className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors [color-scheme:dark]"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-white/70 mb-1.5">
-                        Total Budget
+                        To Date
                       </label>
                       <input
-                        type="number"
-                        name="total_budget"
-                        value={form.total_budget}
+                        type="date"
+                        name="end_date"
+                        value={form.end_date}
                         onChange={handleChange}
-                        placeholder="e.g. 2500000"
-                        min="0"
-                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
+                        min={form.start_date}
+                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors [color-scheme:dark]"
                       />
                     </div>
+                  </div>
+
+                  {/* Budget */}
+                  <div>
+                    <label className="block text-sm font-medium text-white/70 mb-1.5">
+                      Total Budget
+                    </label>
+                    <input
+                      type="number"
+                      name="total_budget"
+                      value={form.total_budget}
+                      onChange={handleChange}
+                      placeholder="e.g. 2500000"
+                      min="0"
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
+                    />
                   </div>
 
                   {/* Venue City */}
@@ -641,6 +670,93 @@ const Dashboard: React.FC = () => {
           )}
         </AnimatePresence>
       </motion.div>
+
+      {/* Mode Switch Modal */}
+      <AnimatePresence>
+        {showModeSwitch && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowModeSwitch(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm bg-dark-100 border border-white/10 rounded-2xl p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-semibold text-white">Account Mode</h2>
+                <button onClick={() => setShowModeSwitch(false)} className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors">
+                  <BsXLg />
+                </button>
+              </div>
+
+              <p className="text-sm text-white/50 mb-4">
+                Current mode: <span className="text-white font-medium">{isPlanner ? 'Wedding Planner' : 'Family / Couple'}</span>
+              </p>
+
+              {isPlanner ? (
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-white/70">Switch to <span className="text-white font-medium">Family / Couple</span> mode?</p>
+                  <p className="text-xs text-white/40 mt-1">Income tracking and activity logs will be hidden. Your data is preserved.</p>
+                </div>
+              ) : (
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-white/70">Switch to <span className="text-white font-medium">Wedding Planner</span> mode?</p>
+                  <p className="text-xs text-white/40 mt-1">Unlocks income tracking, client management, and activity logs.</p>
+                  <input
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    placeholder="Your business name"
+                    className="w-full mt-3 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowModeSwitch(false)}
+                  className="flex-1 py-2.5 bg-white/5 border border-white/10 text-white/60 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  onClick={async () => {
+                    setModeSwitching(true);
+                    try {
+                      const newType = isPlanner ? 'family' : 'planner';
+                      const settings = await createOnboarding({
+                        account_type: newType,
+                        ...(newType === 'planner' && orgName.trim() ? { org_name: orgName.trim() } : {}),
+                      });
+                      setOrgSettings(settings);
+                      setShowModeSwitch(false);
+                      if (newType === 'planner') {
+                        getPlannerSummary().then(setPlannerSummary).catch(() => {});
+                      }
+                      await fetchWeddings();
+                    } catch (err: any) {
+                      setError(err.message || 'Failed to switch mode');
+                    } finally {
+                      setModeSwitching(false);
+                    }
+                  }}
+                  disabled={modeSwitching || (!isPlanner && !orgName.trim())}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-600 text-white font-semibold rounded-xl shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  {modeSwitching ? 'Switching...' : `Switch to ${isPlanner ? 'Family' : 'Planner'}`}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 };

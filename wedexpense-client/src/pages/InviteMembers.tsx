@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BsPersonPlusFill,
   BsXLg,
   BsCheckCircleFill,
   BsEnvelopeFill,
+  BsArrowLeft,
 } from 'react-icons/bs';
 import Layout from '../components/Layout';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -27,6 +28,7 @@ const INITIAL_FORM: InviteForm = {
 
 const InviteMembers: React.FC = () => {
   const { wid } = useParams<{ wid: string }>();
+  const navigate = useNavigate();
 
   const [wedding, setWedding] = useState<any>(null);
   const [form, setForm] = useState<InviteForm>(INITIAL_FORM);
@@ -111,20 +113,29 @@ const InviteMembers: React.FC = () => {
         transition={{ duration: 0.4 }}
         className="max-w-lg mx-auto"
       >
-        {/* Breadcrumb */}
-        <div className="text-sm text-white/40 mb-4">
-          <Link to="/" className="hover:text-white/60 transition-colors">
-            Weddings
-          </Link>
-          <span className="mx-2">/</span>
-          <Link
-            to={`/wedding/${wid}`}
-            className="hover:text-white/60 transition-colors"
+        {/* Breadcrumb with back button */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-colors"
+            title="Go back"
           >
-            {wedding?.wedding_name || 'Wedding'}
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-white/70">Invite Members</span>
+            <BsArrowLeft className="text-lg" />
+          </button>
+          <div className="text-sm text-white/40">
+            <Link to="/" className="hover:text-white/60 transition-colors">
+              Weddings
+            </Link>
+            <span className="mx-2">/</span>
+            <Link
+              to={`/wedding/${wid}`}
+              className="hover:text-white/60 transition-colors"
+            >
+              {wedding?.wedding_name || 'Wedding'}
+            </Link>
+            <span className="mx-2">/</span>
+            <span className="text-white/70">Invite Members</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 mb-6">

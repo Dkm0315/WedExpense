@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BsXLg, BsCheckLg } from 'react-icons/bs';
+import { BsXLg, BsCheckLg, BsArrowLeft } from 'react-icons/bs';
 import Layout from '../components/Layout';
 import ReceiptScanner from '../components/ReceiptScanner';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -188,20 +188,29 @@ const AddExpense: React.FC = () => {
         transition={{ duration: 0.4 }}
         className="max-w-2xl mx-auto"
       >
-        {/* Breadcrumb */}
-        <div className="text-sm text-white/40 mb-4">
-          <Link to="/" className="hover:text-white/60 transition-colors">
-            Weddings
-          </Link>
-          <span className="mx-2">/</span>
-          <Link
-            to={`/wedding/${wid}`}
-            className="hover:text-white/60 transition-colors"
+        {/* Breadcrumb with back button */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-colors"
+            title="Go back"
           >
-            {wedding?.wedding_name || 'Wedding'}
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-white/70">Add Expense</span>
+            <BsArrowLeft className="text-lg" />
+          </button>
+          <div className="text-sm text-white/40">
+            <Link to="/" className="hover:text-white/60 transition-colors">
+              Weddings
+            </Link>
+            <span className="mx-2">/</span>
+            <Link
+              to={`/wedding/${wid}`}
+              className="hover:text-white/60 transition-colors"
+            >
+              {wedding?.wedding_name || 'Wedding'}
+            </Link>
+            <span className="mx-2">/</span>
+            <span className="text-white/70">Add Expense</span>
+          </div>
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-6">
