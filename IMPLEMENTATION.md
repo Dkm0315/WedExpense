@@ -8,6 +8,46 @@
 
 ---
 
+## Screenshots
+
+### Login Page
+Zoho Catalyst Authentication — built-in SSO sign-in widget with "Sign up for free" option.
+
+![Login Page](docs/screenshots/01-login.png)
+
+### Dashboard
+Main dashboard with "Your Weddings" list, gear icon (⚙️) for account mode switching, and "+ New Wedding" button.
+
+![Dashboard](docs/screenshots/02-dashboard.png)
+
+### Create Wedding — Multi-Day Date Range
+Wedding creation form with From Date / To Date fields for multi-day Indian weddings, budget, bride/groom names, and venue city.
+
+![Create Wedding](docs/screenshots/03-create-wedding.png)
+
+### Account Mode Switching
+Switch between Family/Couple and Wedding Planner modes. Planner mode unlocks income tracking, client management, and activity logs.
+
+![Mode Switch](docs/screenshots/04-mode-switch.png)
+
+### Wedding Detail — KPI Cards & Budget Utilization
+*(Authenticated view — see live app)*
+The wedding detail page shows 4 KPI cards (Total Budget, Planned, Total Spent, Remaining) with dual progress bars (blue = Planned allocation, gradient = Actual spent).
+
+### Event Detail — Expense Management
+*(Authenticated view — see live app)*
+Each event lists expenses with vendor, amount, category, payment status. Pencil icon opens edit modal for payment status changes (Paid/Pending/Partial).
+
+### Budget Tab — Inline Analytics
+*(Authenticated view — see live app)*
+Budget charts and AI-powered insights render inline as a tab within Wedding Detail, showing per-category and per-event breakdowns.
+
+### AI Chat Assistant
+*(Authenticated view — see live app)*
+Floating chat bubble with localStorage persistence. Messages survive page reloads, last 6 messages sent as context for follow-up queries.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
